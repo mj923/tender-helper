@@ -1,0 +1,172 @@
+types:
+  # 投标项目核心类型
+  BiddingProject:
+    description: 投标项目
+    required: [name, status]
+    properties:
+      name: { type: string, description: "项目名称" }
+      client: { type: string, description: "客户/招标方" }
+      budget: { type: number, description: "项目预算/最高限价" }
+      deadline: { type: date, description: "投标截止时间（递交文件截止）" }
+      status:
+        type: enum
+        values: [draft, preparing, submitted, won, lost, cancelled]
+      bid_amount: { type: number, description: "投标报价" }
+      notes: { type: string, description: "备注" }
+      # 前附表关键信息
+      opening_time: { type: string, description: "开标时间" }
+      opening_location: { type: string, description: "开标地点" }
+      bid_security_amount: { type: number, description: "投标保证金金额" }
+      bid_security_due: { type: date, description: "保证金缴纳截止时间" }
+      bid_document_copies: { type: string, description: "投标文件份数（正本/副本）" }
+      bid_validity_days: { type: number, description: "投标有效期（天）" }
+      submission_method: { type: string, description: "递交方式（当面递交/邮寄/网上等）" }
+      submission_location: { type: string, description: "投标文件递交地点" }
+      joint_bidding_allowed: { type: boolean, description: "是否接受联合体投标" }
+
+  TenderDocument:
+    description: 招标文件
+    required: [title, project_id]
+    properties:
+      title: { type: string, description: "文件标题" }
+      project_id: { type: reference, description: "所属投标项目" }
+      source_url: { type: string, description: "来源链接" }
+      file_token: { type: string, description: "飞书云空间 file_token（原始文件）" }
+      local_path: { type: string, description: "本地文件路径（如 /tmp/...）" }
+      obtained_date: { type: date, description: "获取日期" }
+      requirements_summary: { type: string, description: "要求摘要" }
+
+  BidDocument:
+    description: 投标文件
+    required: [title, project_id, status]
+    properties:
+      title: { type: string, description: "文件标题" }
+      project_id: { type: reference, description: "所属投标项目" }
+      status:
+        type: enum
+        values: [draft, reviewing, final, submitted]
+      submitted_date: { type: date, description: "提交日期" }
+      file_path: { type: string, description: "文件存储路径" }
+
+  ScoringCriteria:
+    description: 评分标准
+    required: [name, project_id, max_score]
+    properties:
+      name: { type: string, description: "评分项名称" }
+      project_id: { type: reference, description: "所属投标项目" }
+      max_score: { type: number, description: "最高分值" }
+      weight: { type: number, description: "权重(0-1)" }
+      description: { type: string, description: "评分说明" }
+
+  Requirement:
+    description: 资格/技术要求
+    required: [name, project_id, type]
+    properties:
+      name: { type: string, description: "要求名称" }
+      project_id: { type: reference, description: "所属投标项目" }
+      type:
+        type: enum
+        values: [qualification, technical, financial, other]
+      mandatory: { type: boolean, description: "是否强制性" }
+      our_status:
+        type: enum
+        values: [meets, partially_meets, does_not_meet, not_assessed]
+      evidence: { type: string, description: "证明材料说明" }
+
+  Task:
+    description: 投标任务
+    required: [title, project_id, status]
+    properties:
+      title: { type: string, description: "任务标题" }
+      project_id: { type: reference, description: "所属投标项目" }
+      description: { type: string, description: "任务描述" }
+      status:
+        type: enum
+        values: [todo, in_progress, review, done, blocked]
+      priority:
+        type: enum
+        values: [low, medium, high, critical]
+      assignee_id: { type: reference, description: "负责人" }
+      due_date: { type: date, description: "截止时间" }
+      actual_hours: { type: number, description: "实际工时" }
+
+# 基础类型扩展
+  Person:
+    description: "人员"
+    required: [name]
+    properties:
+      name: { type: string }
+      email: { type: string }
+      phone: { type: string }
+      role: { type: string, description: "角色/职位" }
+
+  Organization:
+    description: "组织"
+    required: [name]
+    properties:
+      name: { type: string }
+      type: { type: string, description: "类型: 客户/合作伙伴/我们" }
+
+  Milestone:
+    description: "里程碑"
+    required: [title, project_id, date]
+    properties:
+      title: { type: string }
+      project_id: { type: reference }
+      date: { type: date }
+      completed: { type: boolean, default: false }
+
+relations:
+  # 项目关系
+  has_tender_document:
+    from_types: [BiddingProject]
+    to_types: [TenderDocument]
+    cardinality: one_to_many
+
+  has_bid_document:
+    from_types: [BiddingProject]
+    to_types: [BidDocument]
+    cardinality: one_to_many
+
+  has_task:
+    from_types: [BiddingProject]
+    to_types: [Task]
+    cardinality: one_to_many
+
+  has_scoring_criteria:
+    from_types: [BiddingProject]
+    to_types: [ScoringCriteria]
+    cardinality: one_to_many
+
+  has_requirement:
+    from_types: [BiddingProject]
+    to_types: [Requirement]
+    cardinality: one_to_many
+
+  has_milestone:
+    from_types: [BiddingProject]
+    to_types: [Milestone]
+    cardinality: one_to_many
+
+  # 任务关系
+  assigned_to:
+    from_types: [Task]
+    to_types: [Person]
+    cardinality: many_to_one
+
+  blocks:
+    from_types: [Task]
+    to_types: [Task]
+    cardinality: many_to_many
+    acyclic: true
+
+  # 项目归属
+  managed_by:
+    from_types: [BiddingProject]
+    to_types: [Person]
+    cardinality: many_to_one
+
+  client_is:
+    from_types: [BiddingProject]
+    to_types: [Organization]
+    cardinality: many_to_one

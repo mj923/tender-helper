@@ -1,0 +1,35 @@
+# 临时解析文件（PDF/DOCX 等二进制）
+*.pdf
+*.docx
+*.doc
+*.ofd
+
+# 本地解析缓存
+/tmp/openclaw/
+/tmp/extracted_key.md
+/tmp/toc.json
+
+# Ontology 隐私数据
+memory/ontology/graph.jsonl
+
+# 工作日志（含项目隐私内容，不入git）
+memory/20??-??-??.md
+
+# Python 缓存
+__pycache__/
+*.pyc
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 编辑器
+.vscode/
+.idea/
+
+# 敏感配置文件（含凭证路径）
+~/.config/ima/
+
+# 备份文件
+backup/
+*.bak
